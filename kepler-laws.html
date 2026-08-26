@@ -218,6 +218,7 @@ svg text{font-family:inherit;}
       <button class="btn grow t1planetpre" data-e="0.093">화성 0.093</button>
     </div>
     <div class="note">지구·화성 궤도는 타원이지만 <b>거의 원</b>으로 보입니다.</div>
+    <label class="chk"><input type="checkbox" id="t1comp" checked> 구성 요소 표시 (O·반지름·초점)</label>
     <div class="hr"></div>
     <div class="numrow"><span class="k">이심률 e</span><span class="bignum" id="t1eOrbit">0.60</span></div>
     <div class="numrow"><span class="k">근일점 거리 a(1−e)</span><span class="bignum" id="t1qPeri" style="color:var(--peri)">2.0</span></div>
@@ -504,17 +505,32 @@ const T1 = (() => {
   const pencilDot = el('circle', {r:5.5, fill:'#343A40'}, gPencil);
   // 궤도 모드 요소
   const gOrbitMode = el('g', {style:'display:none'}, svg);
+  // 구성 요소(그림 Ⅲ-22): 중심 O, 긴반지름, 짧은반지름, 초점 라벨
+  const gComp = el('g', {}, gOrbitMode);
+  const axMajor = el('line', {stroke:'#495057','stroke-width':1.2}, gComp);
+  const axMinor = el('line', {stroke:'#495057','stroke-width':1.2,'stroke-dasharray':'5 5'}, gComp);
+  const oDot = el('circle', {r:3, fill:'#495057'}, gComp);
+  const oLab = el('text', {class:'svglabel', fill:'#495057'}, gComp); oLab.textContent = 'O';
+  const majLab = el('text', {class:'svglabel', fill:'#495057','text-anchor':'middle','font-weight':'500'}, gComp);
+  majLab.textContent = '긴반지름';
+  const minLab = el('text', {class:'svglabel', fill:'#495057','text-anchor':'start','font-weight':'500'}, gComp);
+  minLab.textContent = '짧은반지름';
+  const sunFocusLab = el('text', {class:'svglabel', fill:'#E03131','text-anchor':'middle'}, gComp);
+  sunFocusLab.textContent = '초점';
   const emptyFocus = el('g', {}, gOrbitMode);
   el('line',{x1:-7,y1:-7,x2:7,y2:7,stroke:'#ADB5BD','stroke-width':2.5},emptyFocus);
   el('line',{x1:-7,y1:7,x2:7,y2:-7,stroke:'#ADB5BD','stroke-width':2.5},emptyFocus);
   const emptyLab = el('text',{class:'svglabel', fill:'#ADB5BD','text-anchor':'middle'},gOrbitMode);
-  emptyLab.textContent = '비어 있는 초점';
+  emptyLab.textContent = '초점 (비어 있음)';
   const sunG = drawSun(gOrbitMode, 17);
   const sunLab = el('text',{class:'svglabel','text-anchor':'middle'},gOrbitMode); sunLab.textContent='태양';
   const periLab = el('text',{class:'svglabel perilab','text-anchor':'start'},gOrbitMode); periLab.textContent='근일점';
   const aphLab  = el('text',{class:'svglabel aphlab','text-anchor':'end'},gOrbitMode); aphLab.textContent='원일점';
   const planetG = el('g',{},gOrbitMode);
   el('circle',{r:9, fill:'#1971C2', stroke:'#fff','stroke-width':2.5},planetG);
+  const planetArrow = el('g', {}, gOrbitMode);
+  const planetLab = el('text', {class:'svglabel', fill:'#1971C2','text-anchor':'middle'}, gOrbitMode);
+  planetLab.textContent = '행성';
 
   const $ = id => document.getElementById(id);
   const c = () => st.e * A * SCALE;                 // 초점 거리(px)
@@ -594,14 +610,37 @@ const T1 = (() => {
     sunG.setAttribute('transform', `translate(${sx},${CY})`);
     sunLab.setAttribute('x', sx); sunLab.setAttribute('y', CY + 46);
     emptyFocus.setAttribute('transform', `translate(${CX - cpx},${CY})`);
-    emptyLab.setAttribute('x', CX - cpx); emptyLab.setAttribute('y', CY + 30);
+    emptyLab.setAttribute('x', CX - cpx); emptyLab.setAttribute('y', CY - 18);
     emptyFocus.style.display = emptyLab.style.display = cpx > 10 ? '' : 'none';
     periLab.setAttribute('x', CX + apx + 10); periLab.setAttribute('y', CY + 5);
     aphLab.setAttribute('x', CX - apx - 10);  aphLab.setAttribute('y', CY + 5);
+    // 구성 요소: 장축·단축, 중심 O, 초점 라벨 (그림 Ⅲ-22)
+    const showComp = $('t1comp').checked;
+    gComp.style.display = showComp ? '' : 'none';
+    if(showComp){
+      axMajor.setAttribute('x1', CX - apx); axMajor.setAttribute('y1', CY);
+      axMajor.setAttribute('x2', CX + apx); axMajor.setAttribute('y2', CY);
+      axMinor.setAttribute('x1', CX); axMinor.setAttribute('y1', CY);
+      axMinor.setAttribute('x2', CX); axMinor.setAttribute('y2', CY + bpx);
+      oDot.setAttribute('cx', CX); oDot.setAttribute('cy', CY);
+      oLab.setAttribute('x', CX + 9); oLab.setAttribute('y', CY - 10);
+      majLab.setAttribute('x', CX - apx*0.72); majLab.setAttribute('y', CY + 26);
+      minLab.setAttribute('x', CX + 10); minLab.setAttribute('y', CY + bpx/2 + 5);
+      sunFocusLab.setAttribute('x', sx); sunFocusLab.setAttribute('y', CY - 34);
+    }
     // 행성 (물리 엔진: 태양 = 초점 원점, 근일점 +x)
     const s = orbitState(A, st.e, st.M);
     const pxs = sx + s.x*SCALE, pys = CY - s.y*SCALE;
     planetG.setAttribute('transform', `translate(${pxs},${pys})`);
+    // 행성 라벨 + 진행 방향 화살표 (그림 Ⅲ-22의 파란 화살표)
+    planetArrow.style.display = planetLab.style.display = showComp ? '' : 'none';
+    if(showComp){
+      drawArrow(planetArrow, pxs + s.tx*16, pys - s.ty*16, s.tx, -s.ty, 30, '#4DABF7', 3);
+      // 라벨은 궤도 바깥쪽(태양 반대 방향)에 배치
+      const rl = Math.hypot(pxs - sx, pys - CY) || 1;
+      const ox2 = (pxs - sx)/rl, oy2 = (pys - CY)/rl;
+      planetLab.setAttribute('x', pxs + ox2*26); planetLab.setAttribute('y', pys + oy2*26 + 5);
+    }
     // 근일점/원일점 통과 강조
     let Mn = st.M % (2*Math.PI); if(Mn < 0) Mn += 2*Math.PI;
     const nearPeri = Mn < 0.12 || Mn > 2*Math.PI - 0.12;
@@ -710,6 +749,7 @@ const T1 = (() => {
     btn.addEventListener('click', () => setE(parseFloat(btn.dataset.e))));
   $('t1overlay').addEventListener('change', render);
   $('t1abc').addEventListener('change', render);
+  $('t1comp').addEventListener('change', render);
   $('t1eSlider').addEventListener('input', ev => {
     st.e = parseFloat(ev.target.value);
     $('t1eLab').textContent = fmt(st.e, 2);
