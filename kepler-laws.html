@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>케플러 법칙</title>
+<style>
+:root{
+  --bg:#F7F8FA; --panel:#FFFFFF; --line:#E2E5EA; --ink:#1F2328; --sub:#5C636E;
+  --accent:#364FC7; --sun:#FFD43B; --sun-edge:#F08C00; --planet:#1971C2;
+  --orbit:#868E96; --focus:#E03131; --r1:#F5A623; --r2:#C2255C;
+  --peri:#C2255C; --aph:#1971C2; --virtual:#9C36B5;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  background:var(--bg); color:var(--ink); overflow:hidden;
+  -webkit-user-select:none; user-select:none;
+}
+/* ---------- header ---------- */
+header{
+  height:56px; display:flex; align-items:center; gap:20px;
+  padding:0 20px; background:var(--panel); border-bottom:1px solid var(--line);
+}
+header h1{font-size:17px; font-weight:700; color:var(--sub); letter-spacing:.02em; white-space:nowrap;}
+.tabs{display:flex; gap:6px;}
+.tabs button{
+  font:inherit; font-size:16px; font-weight:500; color:var(--sub);
+  background:none; border:none; border-radius:8px; padding:9px 16px; cursor:pointer;
+}
+.tabs button:hover{background:#F1F3F5;}
+.tabs button.active{color:#fff; background:var(--accent); font-weight:700;}
+.spacehint{margin-left:auto; font-size:13px; color:#ADB5BD; white-space:nowrap;}
+/* ---------- layout ---------- */
+main{height:calc(100% - 56px);}
+.tab{display:none; height:100%; padding:14px; gap:14px;}
+.tab.active{display:flex;}
+.stage{flex:7; min-width:0; display:flex; flex-direction:column; gap:10px;}
+.stagebox{flex:1; min-height:0; background:var(--panel); border:1px solid var(--line); border-radius:12px; position:relative; overflow:hidden;}
+.stagebox svg{width:100%; height:100%; display:block; touch-action:none;}
+.panel{
+  flex:3; min-width:290px; max-width:420px; overflow-y:auto;
+  background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px;
+  display:flex; flex-direction:column; gap:14px;
+}
+.panel h2{font-size:15px; font-weight:700; color:var(--sub);}
+.hr{border-top:1px solid var(--line);}
+/* ---------- controls ---------- */
+.seg{display:inline-flex; background:#F1F3F5; border-radius:9px; padding:3px; gap:2px;}
+.seg button{
+  font:inherit; font-size:16px; font-weight:500; border:none; background:none; color:var(--sub);
+  padding:8px 16px; border-radius:7px; cursor:pointer; white-space:nowrap;
+}
+.seg button.active{background:#fff; color:var(--accent); font-weight:700; box-shadow:0 1px 2px rgba(0,0,0,.08);}
+.btn{
+  font:inherit; font-size:16px; font-weight:500; color:var(--ink);
+  background:#fff; border:1px solid #CED4DA; border-radius:9px; padding:9px 14px; cursor:pointer;
+}
+.btn:hover{border-color:var(--accent); color:var(--accent);}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:700;}
+.btn.primary:hover{background:#2F44AC; color:#fff;}
+.btn.big{font-size:17px; padding:12px 16px; width:100%;}
+.btn.on{background:#EDF2FF; border-color:var(--accent); color:var(--accent); font-weight:700;}
+.playbtn{width:52px; height:44px; font-size:19px; flex:none;}
+.row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.grow{flex:1;}
+label.chk{display:flex; align-items:center; gap:8px; font-size:16px; cursor:pointer;}
+input[type=checkbox]{width:19px; height:19px; accent-color:var(--accent); cursor:pointer;}
+/* sliders */
+.sliderblock{display:flex; flex-direction:column; gap:4px;}
+.sliderblock .lab{display:flex; justify-content:space-between; align-items:baseline; font-size:15px; color:var(--sub);}
+.sliderblock .lab b{font-size:20px; color:var(--ink); font-variant-numeric:tabular-nums;}
+input[type=range]{
+  -webkit-appearance:none; appearance:none; width:100%; height:34px; background:none; cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:8px; border-radius:4px; background:#DEE2E6;}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:26px; height:26px; border-radius:50%;
+  background:var(--accent); border:3px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.25); margin-top:-9px;
+}
+input[type=range]::-moz-range-track{height:8px; border-radius:4px; background:#DEE2E6;}
+input[type=range]::-moz-range-thumb{width:24px; height:24px; border-radius:50%; background:var(--accent); border:3px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.25);}
+/* big numbers */
+.bignum{font-size:30px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.25;}
+.numrow{display:flex; justify-content:space-between; align-items:baseline;}
+.numrow .k{font-size:16px; color:var(--sub);}
+.sumbox{
+  border:2px solid var(--accent); border-radius:10px; padding:10px 14px; background:#F8F9FF;
+  display:flex; justify-content:space-between; align-items:center; gap:8px;
+}
+.sumbox .bignum{font-size:34px; color:var(--accent);}
+.badge{
+  font-size:13px; font-weight:700; color:#fff; background:var(--accent);
+  border-radius:99px; padding:4px 10px; white-space:nowrap;
+}
+.note{font-size:14px; color:var(--sub); line-height:1.55;}
+.note b{color:var(--ink);}
+/* sector list */
+.sectors{display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; font-variant-numeric:tabular-nums;}
+.sectors .s{display:flex; align-items:center; gap:7px; font-size:17px; font-weight:600;}
+.sectors .chip{width:14px; height:14px; border-radius:4px; flex:none;}
+.samebox{font-size:17px; font-weight:700; color:var(--accent); text-align:center; padding:8px; background:#F8F9FF; border-radius:9px; border:1px solid #DBE4FF;}
+/* table (tab3) */
+table.kt{border-collapse:collapse; width:100%; font-variant-numeric:tabular-nums;}
+table.kt th,table.kt td{border-bottom:1px solid var(--line); padding:7px 6px; text-align:right; font-size:15.5px; white-space:nowrap;}
+table.kt th{color:var(--sub); font-weight:600; font-size:13.5px; border-bottom:2px solid #CED4DA;}
+table.kt td:first-child,table.kt th:first-child{text-align:left;}
+table.kt td.big{font-size:21px; font-weight:800; color:var(--accent);}
+table.kt tr.virtual td{color:var(--virtual);}
+table.kt tr.virtual td.big{color:var(--virtual);}
+.planetchecks{display:grid; grid-template-columns:repeat(4,1fr); gap:5px 8px;}
+.planetchecks label{font-size:15px;}
+details.graph summary{
+  font-size:15px; font-weight:600; color:var(--sub); cursor:pointer; padding:8px 0; list-style-position:inside;
+}
+.counter{
+  position:absolute; left:14px; top:12px; font-size:22px; font-weight:700;
+  font-variant-numeric:tabular-nums; color:var(--ink);
+  background:rgba(255,255,255,.88); border:1px solid var(--line); border-radius:9px; padding:6px 12px;
+}
+.stagehead{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+/* svg text defaults */
+svg text{font-family:inherit;}
+.svglabel{font-size:16px; fill:var(--ink); paint-order:stroke; stroke:#fff; stroke-width:4px; stroke-linejoin:round; font-weight:600;}
+.perilab{fill:var(--peri);} .aphlab{fill:var(--aph);}
+.pulse{animation:pulse .8s ease;}
+@keyframes pulse{0%{font-size:16px;}40%{font-size:22px;}100%{font-size:16px;}}
+@media (max-width:1100px){
+  .panel{min-width:260px;}
+  .bignum{font-size:26px;} .sumbox .bignum{font-size:29px;}
+  header{gap:10px; padding:0 10px;} .tabs button{padding:8px 10px; font-size:15px;}
+  .spacehint{display:none;}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>케플러 법칙</h1>
+  <nav class="tabs">
+    <button id="tabbtn1" class="active">① 제1법칙 · 타원 궤도</button>
+    <button id="tabbtn2">② 제2법칙 · 면적 속도 일정</button>
+    <button id="tabbtn3">③ 제3법칙 · 조화 법칙</button>
+  </nav>
+  <span class="spacehint">Space = 재생/정지</span>
+</header>
+<main>
+
+<!-- ================= TAB 1 ================= -->
+<section id="tab1" class="tab active">
+  <div class="stage">
+    <div class="stagehead">
+      <div class="seg" id="t1modeSeg">
+        <button id="t1modeDraw" class="active">작도 모드</button>
+        <button id="t1modeOrbit">궤도 모드</button>
+      </div>
+      <span class="note" id="t1hint">압정(초점)을 좌우로 드래그하고, 연필을 직접 끌어 보세요.</span>
+    </div>
+    <div class="stagebox"><svg id="svg1" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet"></svg></div>
+  </div>
+
+  <!-- 작도 모드 패널 -->
+  <aside class="panel" id="t1panelDraw">
+    <h2>실로 타원 그리기 (교과서 179쪽 탐구)</h2>
+    <div class="numrow"><span class="k">실 ① &nbsp;r₁</span><span class="bignum" id="t1r1" style="color:var(--r1)">6.3</span></div>
+    <div class="numrow"><span class="k">실 ② &nbsp;r₂</span><span class="bignum" id="t1r2" style="color:var(--r2)">3.7</span></div>
+    <div class="sumbox">
+      <span class="k" style="font-size:16px;color:var(--sub)">r₁ + r₂</span>
+      <span class="bignum" id="t1rsum">10.0</span>
+      <span class="badge">항상 일정!</span>
+    </div>
+    <div class="numrow"><span class="k">이심률 e = c/a</span><span class="bignum" id="t1eDraw">0.60</span></div>
+    <div class="hr"></div>
+    <h2>이심률 프리셋 (a 고정)</h2>
+    <div class="row">
+      <button class="btn grow t1epre" data-e="0">e = 0</button>
+      <button class="btn grow t1epre" data-e="0.6">e = 0.6</button>
+      <button class="btn grow t1epre" data-e="0.8">e = 0.8</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="t1overlay"> 겹쳐 보기 (e = 0 · 0.6 · 0.8 비교)</label>
+    <label class="chk"><input type="checkbox" id="t1abc"> a · b · c 보조선 표시</label>
+    <div class="hr"></div>
+    <button class="btn primary big" id="t1toOrbit">태양을 초점에 놓기 → 궤도 모드</button>
+  </aside>
+
+  <!-- 궤도 모드 패널 -->
+  <aside class="panel" id="t1panelOrbit" style="display:none">
+    <h2>행성의 타원 궤도 (그림 Ⅲ-22)</h2>
+    <div class="row">
+      <button class="btn playbtn" id="t1play">▶</button>
+      <span class="note grow">태양을 초점에 두고 공전 — 근일점에서 빨라집니다.</span>
+    </div>
+    <div class="sliderblock">
+      <div class="lab"><span>이심률 e</span><b id="t1eLab">0.60</b></div>
+      <input type="range" id="t1eSlider" min="0" max="0.9" step="0.01" value="0.6">
+    </div>
+    <h2>실제 행성 이심률 (표 Ⅲ-3)</h2>
+    <div class="row">
+      <button class="btn grow t1planetpre" data-e="0.206">수성 0.206</button>
+      <button class="btn grow t1planetpre" data-e="0.017">지구 0.017</button>
+      <button class="btn grow t1planetpre" data-e="0.093">화성 0.093</button>
+    </div>
+    <div class="note">지구·화성 궤도는 타원이지만 <b>거의 원</b>으로 보입니다.</div>
+    <div class="hr"></div>
+    <div class="numrow"><span class="k">이심률 e</span><span class="bignum" id="t1eOrbit">0.60</span></div>
+    <div class="numrow"><span class="k">근일점 거리 a(1−e)</span><span class="bignum" id="t1qPeri" style="color:var(--peri)">2.0</span></div>
+    <div class="numrow"><span class="k">원일점 거리 a(1+e)</span><span class="bignum" id="t1qAph" style="color:var(--aph)">8.0</span></div>
+    <div class="note" id="t1e09note" style="display:none">e = 0.9여도 <b>찌그러진 타원</b>이지 직선이 아닙니다. (e = 1이면 포물선)</div>
+  </aside>
+</section>
+
+<!-- ================= TAB 2 ================= -->
+<section id="tab2" class="tab">
+  <div class="stage">
+    <div class="stagebox"><svg id="svg2" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet"></svg></div>
+  </div>
+  <aside class="panel">
+    <h2>면적 속도 일정 (그림 Ⅲ-24)</h2>
+    <div class="row">
+      <button class="btn playbtn" id="t2play">▶</button>
+      <div class="seg">
+        <button class="t2speed" data-s="0.5">0.5×</button>
+        <button class="t2speed active" data-s="1">1×</button>
+        <button class="t2speed" data-s="2">2×</button>
+      </div>
+      <button class="btn" id="t2clear">부채꼴 지우기</button>
+    </div>
+    <div class="sliderblock">
+      <div class="lab"><span>이심률 e</span><b id="t2eLab">0.60</b></div>
+      <input type="range" id="t2eSlider" min="0" max="0.8" step="0.01" value="0.6">
+    </div>
+    <div class="row">
+      <button class="btn grow" id="t2mercury">수성 궤도로 보기 (e = 0.206)</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="t2vec" checked> 속도 벡터 표시</label>
+    <div class="hr"></div>
+    <div class="numrow"><span class="k">공전 속도 (원일점 = 1 기준)</span><span class="bignum" id="t2vNow" style="color:var(--focus)">1.00×</span></div>
+    <div class="note">근일점 속도 = <b id="t2vPeri">4.00×</b> (= (1+e)/(1−e))</div>
+    <div class="hr"></div>
+    <h2>부채꼴 면적 (같은 시간 Δt = P/8)</h2>
+    <div class="sectors" id="t2list"></div>
+    <div class="samebox" id="t2same" style="display:none">→ 같은 시간, 같은 면적!</div>
+    <div class="note" id="t2dev"></div>
+  </aside>
+</section>
+
+<!-- ================= TAB 3 ================= -->
+<section id="tab3" class="tab">
+  <div class="stage" style="flex:5.5">
+    <div class="stagehead">
+      <button class="btn playbtn" id="t3play">▶</button>
+      <div class="seg" id="t3zoomSeg">
+        <button id="t3zoomIn" class="active">내행성 보기</button>
+        <button id="t3zoomAll">전체 보기</button>
+      </div>
+      <button class="btn" id="t3reset">처음부터</button>
+    </div>
+    <div class="stagebox">
+      <svg id="svg3" viewBox="0 0 760 660" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="counter">경과 시간: <span id="t3time">0.0</span>년</div>
+    </div>
+  </div>
+  <aside class="panel" style="flex:4.5; max-width:560px">
+    <h2>행성 선택</h2>
+    <div class="planetchecks" id="t3checks"></div>
+    <div class="hr"></div>
+    <h2>조화 법칙: 모든 행성에서 a³/P² = 일정 (표 Ⅲ-1 · Ⅲ-3)</h2>
+    <table class="kt">
+      <thead><tr><th>행성</th><th>a (AU)</th><th>P (년)</th><th>a³</th><th>P²</th><th>a³/P²</th></tr></thead>
+      <tbody id="t3tbody"></tbody>
+    </table>
+    <div class="hr"></div>
+    <div class="row">
+      <button class="btn grow" id="t3addVirtual">＋ 가상 행성 추가</button>
+    </div>
+    <div id="t3virtualCtl" style="display:none">
+      <div class="sliderblock">
+        <div class="lab"><span style="color:var(--virtual);font-weight:700">가상 행성 &nbsp;a (AU)</span><b id="t3vaLab" style="color:var(--virtual)">4.0</b></div>
+        <input type="range" id="t3vaSlider" min="0.2" max="40" step="0.1" value="4">
+      </div>
+      <div class="numrow"><span class="k">공전 주기 P = √a³</span><span class="bignum" id="t3vP" style="color:var(--virtual)">8.0년</span></div>
+      <div class="note">긴반지름 a만 알면 공전 주기 P를 알 수 있습니다!</div>
+    </div>
+    <details class="graph" id="t3graphBox">
+      <summary>보조 그래프 · P² – a³ (그림 Ⅲ-25)</summary>
+      <svg id="svg3g" viewBox="0 0 480 400" style="width:100%; height:auto; touch-action:auto"></svg>
+    </details>
+  </aside>
+</section>
+
+</main>
+<script>
+'use strict';
+/* ================================================================
+   PHYSICS ENGINE  (공통 유틸 — 케플러 방정식 · 위치 · 속도 · 면적)
+   ================================================================ */
+// 케플러 방정식 M = E − e·sinE 를 뉴턴-랩슨으로 풀어 E를 구한다.
+function solveKepler(M, e){
+  M = M % (2*Math.PI); if(M < 0) M += 2*Math.PI;
+  let E = (e < 0.8) ? M : Math.PI;
+  for(let i = 0; i < 10; i++){
+    const f = E - e*Math.sin(E) - M;
+    E -= f / (1 - e*Math.cos(E));
+  }
+  return E;
+}
+// 초점(태양)을 원점, 근일점을 +x 방향으로 둔 궤도 상태.
+// 반환: 위치(x,y), 동경 r, 상대 속력 v(vis-viva), 접선 단위벡터(tx,ty)
+function orbitState(a, e, M){
+  const E = solveKepler(M, e);
+  const b = a * Math.sqrt(1 - e*e);
+  const x = a * (Math.cos(E) - e);
+  const y = b * Math.sin(E);
+  const r = a * (1 - e*Math.cos(E));
+  const v = Math.sqrt(Math.max(0, 2/r - 1/a));   // vis-viva (GM=1 상대값)
+  let tx = -a * Math.sin(E), ty = b * Math.cos(E);
+  const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+  return {E, x, y, r, v, tx, ty};
+}
+// 평균 근점이각 구간 [M0,M1] 동안 태양–행성 선분이 쓸고 간 부채꼴 polygon
+function sectorPolygon(a, e, M0, M1, n){
+  n = n || 80;
+  const pts = [[0,0]];
+  for(let i = 0; i <= n; i++){
+    const s = orbitState(a, e, M0 + (M1 - M0) * i / n);
+    pts.push([s.x, s.y]);
+  }
+  return pts;
+}
+// 신발끈 공식
+function polyArea(pts){
+  let s = 0;
+  for(let i = 0; i < pts.length; i++){
+    const [x1,y1] = pts[i], [x2,y2] = pts[(i+1) % pts.length];
+    s += x1*y2 - x2*y1;
+  }
+  return Math.abs(s) / 2;
+}
+function polyCentroid(pts){
+  let A = 0, cx = 0, cy = 0;
+  for(let i = 0; i < pts.length; i++){
+    const [x1,y1] = pts[i], [x2,y2] = pts[(i+1) % pts.length];
+    const cr = x1*y2 - x2*y1;
+    A += cr; cx += (x1+x2)*cr; cy += (y1+y2)*cr;
+  }
+  A /= 2;
+  if(Math.abs(A) < 1e-12) return pts[Math.floor(pts.length/2)];
+  return [cx/(6*A), cy/(6*A)];
+}
+/* ================================================================ */
+
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(name, attrs, parent){
+  const n = document.createElementNS(SVGNS, name);
+  if(attrs) for(const k in attrs) n.setAttribute(k, attrs[k]);
+  if(parent) parent.appendChild(n);
+  return n;
+}
+function fmt(x, d){ return x.toFixed(d); }
+function fmtAuto(x){
+  if(x >= 1000) return x.toFixed(0);
+  if(x >= 100) return x.toFixed(1);
+  if(x >= 10) return x.toFixed(2);
+  return x.toFixed(3);
+}
+function ellipsePath(cx, cy, rx, ry, phi0, phi1, n){
+  n = n || 90;
+  let d = '';
+  for(let i = 0; i <= n; i++){
+    const p = phi0 + (phi1 - phi0)*i/n;
+    const x = cx + rx*Math.cos(p), y = cy - ry*Math.sin(p);
+    d += (i ? 'L' : 'M') + x.toFixed(2) + ' ' + y.toFixed(2);
+  }
+  return d;
+}
+// 태양 그리기 (광선 포함)
+function drawSun(parent, r){
+  const g = el('g', {}, parent);
+  for(let i = 0; i < 12; i++){
+    const a = i * Math.PI/6;
+    el('line', {x1:Math.cos(a)*(r+3), y1:Math.sin(a)*(r+3),
+                x2:Math.cos(a)*(r+9), y2:Math.sin(a)*(r+9),
+                stroke:'#F08C00','stroke-width':3,'stroke-linecap':'round'}, g);
+  }
+  el('circle', {r:r, fill:'#FFD43B', stroke:'#F08C00','stroke-width':3}, g);
+  return g;
+}
+function drawArrow(g, x, y, dx, dy, len, color, w){
+  // (dx,dy)=단위벡터
+  const x2 = x + dx*len, y2 = y + dy*len;
+  const hw = 5 + w, hl = 9 + w*2;
+  const px = -dy, py = dx;
+  g.innerHTML = '';
+  el('line', {x1:x, y1:y, x2:x2 - dx*hl*0.6, y2:y2 - dy*hl*0.6, stroke:color, 'stroke-width':w}, g);
+  el('polygon', {points:
+    (x2)+','+(y2)+' '+
+    (x2 - dx*hl + px*hw)+','+(y2 - dy*hl + py*hw)+' '+
+    (x2 - dx*hl - px*hw)+','+(y2 - dy*hl - py*hw), fill:color}, g);
+}
+
+/* ================================================================
+   전역 탭 관리
+   ================================================================ */
+const tabs = {cur:1};
+function switchTab(n){
+  if(tabs.cur === n) return;
+  // 떠나는 탭 자동 일시정지
+  if(tabs.cur === 1) T1.setPlay(false);
+  if(tabs.cur === 2) T2.setPlay(false);
+  if(tabs.cur === 3) T3.setPlay(false);
+  tabs.cur = n;
+  for(let i = 1; i <= 3; i++){
+    document.getElementById('tab'+i).classList.toggle('active', i === n);
+    document.getElementById('tabbtn'+i).classList.toggle('active', i === n);
+  }
+}
+for(let i = 1; i <= 3; i++){
+  document.getElementById('tabbtn'+i).addEventListener('click', () => switchTab(i));
+}
+document.addEventListener('keydown', ev => {
+  if(ev.code === 'Space' && !/INPUT|TEXTAREA/.test(ev.target.tagName)){
+    ev.preventDefault();
+    if(tabs.cur === 1) T1.togglePlay();
+    if(tabs.cur === 2) T2.togglePlay();
+    if(tabs.cur === 3) T3.togglePlay();
+  }
+});
+document.addEventListener('click', ev => { if(ev.target.tagName === 'BUTTON') ev.target.blur(); });
+
+/* ================================================================
+   TAB 1 — 제1법칙 · 타원 궤도
+   ================================================================ */
+const T1 = (() => {
+  const svg = document.getElementById('svg1');
+  const CX = 500, CY = 300, SCALE = 56, A = 5;      // a = 5 → r1+r2 = 10.0
+  const st = {
+    mode:'draw',            // 'draw' | 'orbit'
+    e:0.6,                  // 현재 이심률
+    phi:0.8,                // 작도 모드: 연필의 매개변수각
+    traceStart:0.8, traceEnd:0.8,   // 그려진 궤적 범위
+    autoDraw:true,          // 작도 모드 연필 자동 회전
+    M:0,                    // 궤도 모드: 평균 근점이각
+    playing:false,
+    dragging:null,
+    lastPulse:''
+  };
+  // --- SVG 구조 ---
+  const gOverlay = el('g', {}, svg);
+  const gAux     = el('g', {}, svg);          // a,b,c 보조선
+  const gOrbitEl = el('g', {}, svg);          // 타원(회색)
+  const ellipseFaint = el('path', {fill:'none', stroke:'#D4D8DE', 'stroke-width':2, 'stroke-dasharray':'5 6'}, gOrbitEl);
+  const trace = el('path', {fill:'none', stroke:'#868E96', 'stroke-width':2.5}, gOrbitEl);
+  const gStr = el('g', {}, svg);              // 실 2가닥
+  const str1 = el('line', {stroke:'#F5A623','stroke-width':3,'stroke-linecap':'round'}, gStr);
+  const str2 = el('line', {stroke:'#C2255C','stroke-width':3,'stroke-linecap':'round'}, gStr);
+  const str1lab = el('text', {class:'svglabel', fill:'#F5A623'}, gStr);
+  const str2lab = el('text', {class:'svglabel', fill:'#C2255C'}, gStr);
+  // 압정(초점)
+  function makePin(){
+    const g = el('g', {cursor:'ew-resize'}, svg);
+    el('circle', {r:22, fill:'transparent'}, g);                    // 터치 히트영역
+    el('line', {x1:0,y1:0,x2:0,y2:-13,stroke:'#E03131','stroke-width':3}, g);
+    el('circle', {cy:-17, r:7.5, fill:'#E03131', stroke:'#B02525','stroke-width':1.5}, g);
+    el('circle', {r:3.4, fill:'#E03131'}, g);
+    return g;
+  }
+  const pin1 = makePin(), pin2 = makePin();
+  const pin1lab = el('text', {class:'svglabel', fill:'#E03131'}, svg);
+  const pin2lab = el('text', {class:'svglabel', fill:'#E03131'}, svg);
+  // 연필
+  const gPencil = el('g', {cursor:'grab'}, svg);
+  el('circle', {r:20, fill:'transparent'}, gPencil);
+  const pencilIcon = el('g', {}, gPencil);
+  pencilIcon.innerHTML =
+    '<g transform="rotate(-45)">' +
+    '<polygon points="0,0 13,-5 13,5" fill="#F4B26A" stroke="#B98A4A" stroke-width="1"/>' +
+    '<polygon points="0,0 5,-1.9 5,1.9" fill="#4A4A4A"/>' +
+    '<rect x="13" y="-5" width="34" height="10" rx="2" fill="#FFD43B" stroke="#B98A4A" stroke-width="1"/>' +
+    '<rect x="47" y="-5" width="7" height="10" rx="2.5" fill="#F783AC"/>' +
+    '</g>';
+  const pencilDot = el('circle', {r:5.5, fill:'#343A40'}, gPencil);
+  // 궤도 모드 요소
+  const gOrbitMode = el('g', {style:'display:none'}, svg);
+  const emptyFocus = el('g', {}, gOrbitMode);
+  el('line',{x1:-7,y1:-7,x2:7,y2:7,stroke:'#ADB5BD','stroke-width':2.5},emptyFocus);
+  el('line',{x1:-7,y1:7,x2:7,y2:-7,stroke:'#ADB5BD','stroke-width':2.5},emptyFocus);
+  const emptyLab = el('text',{class:'svglabel', fill:'#ADB5BD','text-anchor':'middle'},gOrbitMode);
+  emptyLab.textContent = '비어 있는 초점';
+  const sunG = drawSun(gOrbitMode, 17);
+  const sunLab = el('text',{class:'svglabel','text-anchor':'middle'},gOrbitMode); sunLab.textContent='태양';
+  const periLab = el('text',{class:'svglabel perilab','text-anchor':'start'},gOrbitMode); periLab.textContent='근일점';
+  const aphLab  = el('text',{class:'svglabel aphlab','text-anchor':'end'},gOrbitMode); aphLab.textContent='원일점';
+  const planetG = el('g',{},gOrbitMode);
+  el('circle',{r:9, fill:'#1971C2', stroke:'#fff','stroke-width':2.5},planetG);
+
+  const $ = id => document.getElementById(id);
+  const c = () => st.e * A * SCALE;                 // 초점 거리(px)
+  const b = () => A * Math.sqrt(1 - st.e*st.e);     // 짧은반지름(단위)
+
+  function pencilPos(){
+    const bx = b();
+    return [CX + A*SCALE*Math.cos(st.phi), CY - bx*SCALE*Math.sin(st.phi)];
+  }
+
+  function renderDraw(){
+    const cpx = c(), bpx = b()*SCALE, apx = A*SCALE;
+    ellipseFaint.setAttribute('d', ellipsePath(CX, CY, apx, bpx, 0, 2*Math.PI) + 'Z');
+    // 궤적
+    const span = Math.min(st.traceEnd - st.traceStart, 2*Math.PI);
+    trace.setAttribute('d', span > 1e-4 ? ellipsePath(CX, CY, apx, bpx, st.traceEnd - span, st.traceEnd, 120) : '');
+    // 압정
+    pin1.setAttribute('transform', `translate(${CX - cpx},${CY})`);
+    pin2.setAttribute('transform', `translate(${CX + cpx},${CY})`);
+    pin1lab.setAttribute('x', CX - cpx - 8); pin1lab.setAttribute('y', CY + 28);
+    pin2lab.setAttribute('x', CX + cpx - 8); pin2lab.setAttribute('y', CY + 28);
+    pin1lab.textContent = 'F₁'; pin2lab.textContent = 'F₂';
+    // 연필 + 실
+    const [px, py] = pencilPos();
+    gPencil.setAttribute('transform', `translate(${px},${py})`);
+    const f1x = CX - cpx, f2x = CX + cpx;
+    str1.setAttribute('x1', f1x); str1.setAttribute('y1', CY);
+    str1.setAttribute('x2', px);  str1.setAttribute('y2', py);
+    str2.setAttribute('x1', f2x); str2.setAttribute('y1', CY);
+    str2.setAttribute('x2', px);  str2.setAttribute('y2', py);
+    const r1 = Math.hypot(px - f1x, py - CY) / SCALE;
+    const r2 = Math.hypot(px - f2x, py - CY) / SCALE;
+    str1lab.setAttribute('x', (f1x + px)/2 - 30); str1lab.setAttribute('y', (CY + py)/2 - 8);
+    str2lab.setAttribute('x', (f2x + px)/2 + 10); str2lab.setAttribute('y', (CY + py)/2 - 8);
+    str1lab.textContent = 'r₁ = ' + fmt(r1, 1);
+    str2lab.textContent = 'r₂ = ' + fmt(r2, 1);
+    // 패널
+    $('t1r1').textContent = fmt(r1, 1);
+    $('t1r2').textContent = fmt(r2, 1);
+    $('t1rsum').textContent = fmt(r1 + r2, 1);
+    $('t1eDraw').textContent = st.e < 0.005 ? '0 (원!)' : fmt(st.e, 2);
+    // 보조선
+    gAux.innerHTML = '';
+    if($('t1abc').checked){
+      const mk = (x1,y1,x2,y2,col,txt,tx,ty) => {
+        el('line',{x1,y1,x2,y2,stroke:col,'stroke-width':2,'stroke-dasharray':'3 4'},gAux);
+        const t = el('text',{class:'svglabel',fill:col,x:tx,y:ty},gAux); t.textContent = txt;
+      };
+      mk(CX, CY, CX+apx, CY, '#364FC7', 'a', CX+apx/2, CY-8);
+      mk(CX, CY, CX, CY-bpx, '#2F9E44', 'b', CX+8, CY-bpx/2);
+      if(cpx > 6) mk(CX, CY+3, CX+cpx, CY+3, '#E03131', 'c', CX+cpx/2, CY+22);
+      el('circle',{cx:CX, cy:CY, r:3, fill:'#495057'},gAux);
+    }
+    // 겹쳐 보기: 현재 오른쪽 초점을 공통 초점으로 e=0/0.6/0.8
+    gOverlay.innerHTML = '';
+    if($('t1overlay').checked){
+      const fx = CX + cpx;
+      [[0,'#2F9E44'],[0.6,'#1971C2'],[0.8,'#9C36B5']].forEach(([e2,col]) => {
+        const c2 = e2*A*SCALE, b2 = A*Math.sqrt(1-e2*e2)*SCALE;
+        el('path',{d:ellipsePath(fx - c2, CY, A*SCALE, b2, 0, 2*Math.PI)+'Z',
+                   fill:'none', stroke:col,'stroke-width':2.5, opacity:0.55},gOverlay);
+        const t = el('text',{class:'svglabel', fill:col, x:fx - c2 - A*SCALE + 6, y:CY - 10 - e2*22},gOverlay);
+        t.textContent = 'e = ' + e2;
+      });
+      el('circle',{cx:fx, cy:CY, r:4, fill:'#E03131'},gOverlay);
+    }
+  }
+
+  function renderOrbit(){
+    const cpx = c(), bpx = b()*SCALE, apx = A*SCALE;
+    ellipseFaint.setAttribute('d', '');
+    trace.setAttribute('d', ellipsePath(CX, CY, apx, bpx, 0, 2*Math.PI) + 'Z');
+    const sx = CX + cpx;   // 태양 = 오른쪽 초점
+    sunG.setAttribute('transform', `translate(${sx},${CY})`);
+    sunLab.setAttribute('x', sx); sunLab.setAttribute('y', CY + 46);
+    emptyFocus.setAttribute('transform', `translate(${CX - cpx},${CY})`);
+    emptyLab.setAttribute('x', CX - cpx); emptyLab.setAttribute('y', CY + 30);
+    emptyFocus.style.display = emptyLab.style.display = cpx > 10 ? '' : 'none';
+    periLab.setAttribute('x', CX + apx + 10); periLab.setAttribute('y', CY + 5);
+    aphLab.setAttribute('x', CX - apx - 10);  aphLab.setAttribute('y', CY + 5);
+    // 행성 (물리 엔진: 태양 = 초점 원점, 근일점 +x)
+    const s = orbitState(A, st.e, st.M);
+    const pxs = sx + s.x*SCALE, pys = CY - s.y*SCALE;
+    planetG.setAttribute('transform', `translate(${pxs},${pys})`);
+    // 근일점/원일점 통과 강조
+    let Mn = st.M % (2*Math.PI); if(Mn < 0) Mn += 2*Math.PI;
+    const nearPeri = Mn < 0.12 || Mn > 2*Math.PI - 0.12;
+    const nearAph  = Math.abs(Mn - Math.PI) < 0.12;
+    if(nearPeri && st.lastPulse !== 'p'){ periLab.classList.remove('pulse'); void periLab.getBBox; periLab.classList.add('pulse'); st.lastPulse='p'; }
+    else if(nearAph && st.lastPulse !== 'a'){ aphLab.classList.remove('pulse'); void aphLab.getBBox; aphLab.classList.add('pulse'); st.lastPulse='a'; }
+    else if(!nearPeri && !nearAph) st.lastPulse = '';
+    // 패널
+    $('t1eOrbit').textContent = fmt(st.e, 2) + (st.e < 0.005 ? ' (원)' : '');
+    $('t1qPeri').textContent = fmt(A*(1 - st.e), 1);
+    $('t1qAph').textContent = fmt(A*(1 + st.e), 1);
+    $('t1e09note').style.display = st.e >= 0.85 ? '' : 'none';
+  }
+
+  function render(){ st.mode === 'draw' ? renderDraw() : renderOrbit(); }
+
+  function setMode(m){
+    st.mode = m;
+    const draw = m === 'draw';
+    $('t1modeDraw').classList.toggle('active', draw);
+    $('t1modeOrbit').classList.toggle('active', !draw);
+    $('t1panelDraw').style.display = draw ? '' : 'none';
+    $('t1panelOrbit').style.display = draw ? 'none' : '';
+    $('t1hint').textContent = draw
+      ? '압정(초점)을 좌우로 드래그하고, 연필을 직접 끌어 보세요.'
+      : '한쪽 압정이 태양이 되었습니다. 다른 초점은 × 로 비어 있습니다.';
+    [gStr, gAux, gOverlay, pin1, pin2, pin1lab, pin2lab, gPencil].forEach(g => g.style.display = draw ? '' : 'none');
+    gOrbitMode.style.display = draw ? 'none' : '';
+    // 전환 연출: 태양·행성 스르륵 등장
+    if(!draw){
+      st.e = Math.min(st.e, 0.9);
+      $('t1eSlider').value = st.e;
+      $('t1eLab').textContent = fmt(st.e, 2);
+      gOrbitMode.style.opacity = 0;
+      gOrbitMode.style.transition = 'none';
+      requestAnimationFrame(() => {
+        gOrbitMode.style.transition = 'opacity 0.5s';
+        gOrbitMode.style.opacity = 1;
+      });
+      setPlay(true);
+    } else setPlay(false);
+    render();
+  }
+  function setE(e){
+    st.e = Math.max(0, Math.min(0.93, e));
+    st.traceStart = st.traceEnd = st.phi;   // 타원이 바뀌면 궤적 초기화
+    render();
+  }
+  function setPlay(p){
+    st.playing = p;
+    $('t1play').textContent = p ? '⏸' : '▶';
+  }
+  function togglePlay(){
+    if(st.mode === 'draw'){ st.autoDraw = !st.autoDraw; }
+    else setPlay(!st.playing);
+  }
+
+  // --- 인터랙션 ---
+  function svgPoint(ev){
+    const pt = svg.createSVGPoint();
+    pt.x = ev.clientX; pt.y = ev.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  function pinDrag(ev){
+    const p = svgPoint(ev);
+    const cNew = Math.abs(p.x - CX);
+    setE(Math.min(0.93, cNew / (A*SCALE)));
+  }
+  function pencilDrag(ev){
+    const p = svgPoint(ev);
+    const phiNew = Math.atan2(-(p.y - CY) / (b()*SCALE), (p.x - CX) / (A*SCALE));
+    let d = phiNew - (st.phi % (2*Math.PI));
+    while(d > Math.PI) d -= 2*Math.PI;
+    while(d < -Math.PI) d += 2*Math.PI;
+    st.phi += d;
+    st.traceEnd = st.phi;
+    if(st.phi < st.traceStart) st.traceStart = st.phi;
+    if(st.traceEnd - st.traceStart > 2*Math.PI) st.traceStart = st.traceEnd - 2*Math.PI;
+    render();
+  }
+  [[pin1,'pin'],[pin2,'pin'],[gPencil,'pencil']].forEach(([g, kind]) => {
+    g.addEventListener('pointerdown', ev => {
+      ev.preventDefault();
+      st.dragging = kind;
+      g.setPointerCapture(ev.pointerId);
+    });
+  });
+  svg.addEventListener('pointermove', ev => {
+    if(!st.dragging || st.mode !== 'draw') return;
+    ev.preventDefault();
+    st.dragging === 'pin' ? pinDrag(ev) : pencilDrag(ev);
+  });
+  svg.addEventListener('pointerup', () => st.dragging = null);
+  svg.addEventListener('pointercancel', () => st.dragging = null);
+
+  // --- 패널 이벤트 ---
+  $('t1modeDraw').addEventListener('click', () => setMode('draw'));
+  $('t1modeOrbit').addEventListener('click', () => setMode('orbit'));
+  $('t1toOrbit').addEventListener('click', () => setMode('orbit'));
+  document.querySelectorAll('.t1epre').forEach(btn =>
+    btn.addEventListener('click', () => setE(parseFloat(btn.dataset.e))));
+  $('t1overlay').addEventListener('change', render);
+  $('t1abc').addEventListener('change', render);
+  $('t1eSlider').addEventListener('input', ev => {
+    st.e = parseFloat(ev.target.value);
+    $('t1eLab').textContent = fmt(st.e, 2);
+    render();
+  });
+  document.querySelectorAll('.t1planetpre').forEach(btn =>
+    btn.addEventListener('click', () => {
+      st.e = parseFloat(btn.dataset.e);
+      $('t1eSlider').value = st.e;
+      $('t1eLab').textContent = fmt(st.e, 2);
+      render();
+    }));
+  $('t1play').addEventListener('click', () => setPlay(!st.playing));
+
+  // --- 애니메이션 ---
+  function tick(dt){
+    if(st.mode === 'draw'){
+      if(st.autoDraw && !st.dragging){
+        st.phi += dt * 0.45;
+        st.traceEnd = st.phi;
+        if(st.traceEnd - st.traceStart > 2*Math.PI) st.traceStart = st.traceEnd - 2*Math.PI;
+        render();
+      }
+    } else if(st.playing){
+      st.M += dt * (2*Math.PI / 10);   // 공전 주기 10초
+      render();
+    }
+  }
+  render();
+  return {tick, setPlay, togglePlay};
+})();
+
+/* ================================================================
+   TAB 2 — 제2법칙 · 면적 속도 일정
+   ================================================================ */
+const T2 = (() => {
+  const svg = document.getElementById('svg2');
+  const CX = 500, CY = 300, SCALE = 55, A = 5, NSEC = 8;
+  const SECCOL = ['#4DABF7','#69DB7C','#FFD43B','#FF8787'];
+  const PERIOD = 12;   // 1× 공전 12초
+  const st = {e:0.6, Mtot:0, playing:false, speed:1, sectors:[], showVec:true};
+  const $ = id => document.getElementById(id);
+
+  const gSec = el('g', {}, svg);
+  const gPartial = el('polygon', {fill:'#4DABF7', opacity:0.3}, svg);
+  const orbitPath = el('path', {fill:'none', stroke:'#868E96','stroke-width':2}, svg);
+  const radiusLine = el('line', {stroke:'#868E96','stroke-width':1.5,'stroke-dasharray':'4 4'}, svg);
+  const sunG = drawSun(svg, 19);
+  const sunLab = el('text',{class:'svglabel','text-anchor':'middle'},svg); sunLab.textContent='태양';
+  const periLab = el('text',{class:'svglabel perilab','text-anchor':'start'},svg); periLab.textContent='근일점 (빠름)';
+  const aphLab  = el('text',{class:'svglabel aphlab','text-anchor':'end'},svg); aphLab.textContent='원일점 (느림)';
+  const gLabels = el('g', {}, svg);
+  const vecG = el('g', {}, svg);
+  const planetG = el('g', {}, svg);
+  el('circle',{r:9, fill:'#1971C2', stroke:'#fff','stroke-width':2.5},planetG);
+
+  const sunX = () => CX + st.e*A*SCALE;
+
+  function rebuildStatic(){
+    const bpx = A*Math.sqrt(1 - st.e*st.e)*SCALE, apx = A*SCALE;
+    orbitPath.setAttribute('d', ellipsePath(CX, CY, apx, bpx, 0, 2*Math.PI) + 'Z');
+    sunG.setAttribute('transform', `translate(${sunX()},${CY})`);
+    sunLab.setAttribute('x', sunX()); sunLab.setAttribute('y', CY + 50);
+    periLab.setAttribute('x', CX + apx + 10); periLab.setAttribute('y', CY + 5);
+    aphLab.setAttribute('x', CX - apx - 10);  aphLab.setAttribute('y', CY + 5);
+    $('t2vPeri').textContent = fmt((1 + st.e)/(1 - st.e), 2) + '×';
+  }
+  function toScreen(pts){
+    const sx = sunX();
+    return pts.map(([x,y]) => (sx + x*SCALE).toFixed(1) + ',' + (CY - y*SCALE).toFixed(1)).join(' ');
+  }
+  function completeSector(k){
+    const dM = 2*Math.PI/NSEC;
+    const pts = sectorPolygon(A, st.e, k*dM, (k+1)*dM, 96);
+    const area = polyArea(pts);
+    const [cx0, cy0] = polyCentroid(pts);
+    const col = SECCOL[k % SECCOL.length];
+    const poly = el('polygon', {points:toScreen(pts), fill:col, opacity:0.45, stroke:col,'stroke-width':1}, gSec);
+    const lab = el('text', {class:'svglabel', x:sunX() + cx0*SCALE, y:CY - cy0*SCALE + 5, 'text-anchor':'middle','font-size':'15px'}, gLabels);
+    lab.textContent = 'S' + '₁₂₃₄₅₆₇₈'[k] + '=' + fmt(area, 1);
+    st.sectors.push({k, area, col});
+    renderList();
+  }
+  function renderList(){
+    const list = $('t2list'); list.innerHTML = '';
+    st.sectors.forEach(s => {
+      const d = document.createElement('div');
+      d.className = 's';
+      d.innerHTML = `<span class="chip" style="background:${s.col}"></span>S${'₁₂₃₄₅₆₇₈'[s.k]} = ${fmt(s.area,2)}`;
+      list.appendChild(d);
+    });
+    $('t2same').style.display = st.sectors.length >= 2 ? '' : 'none';
+    if(st.sectors.length >= 2){
+      const areas = st.sectors.map(s => s.area);
+      const mean = areas.reduce((a,b) => a+b, 0) / areas.length;
+      const dev = Math.max(...areas.map(a => Math.abs(a - mean))) / mean * 100;
+      $('t2dev').textContent = `면적 최대 편차 ${dev.toFixed(2)}% (같은 시간 Δt = P/8 기준)`;
+    } else $('t2dev').textContent = '재생하면 같은 시간마다 쓸고 간 부채꼴이 색칠됩니다.';
+  }
+  function clearSectors(resetM){
+    gSec.innerHTML = ''; gLabels.innerHTML = '';
+    st.sectors = [];
+    gPartial.setAttribute('points','');
+    if(resetM !== false) st.Mtot = 0;
+    renderList();
+  }
+  function render(){
+    const s = orbitState(A, st.e, st.Mtot);
+    const sx = sunX();
+    const px = sx + s.x*SCALE, py = CY - s.y*SCALE;
+    planetG.setAttribute('transform', `translate(${px},${py})`);
+    radiusLine.setAttribute('x1', sx); radiusLine.setAttribute('y1', CY);
+    radiusLine.setAttribute('x2', px); radiusLine.setAttribute('y2', py);
+    // 진행 중 부채꼴
+    const dM = 2*Math.PI/NSEC;
+    if(st.Mtot < 2*Math.PI - 1e-9){
+      const k = Math.floor(st.Mtot / dM);
+      const pts = sectorPolygon(A, st.e, k*dM, st.Mtot, 48);
+      const col = SECCOL[k % SECCOL.length];
+      gPartial.setAttribute('points', toScreen(pts));
+      gPartial.setAttribute('fill', col);
+    } else gPartial.setAttribute('points','');
+    // 속도 벡터 (vis-viva, 원일점 = 1 기준)
+    const vAph = Math.sqrt(2/(A*(1+st.e)) - 1/A);
+    const vRel = s.v / vAph;
+    vecG.style.display = st.showVec ? '' : 'none';
+    if(st.showVec){
+      // 화면상 접선: y축 반전 주의
+      drawArrow(vecG, px, py, s.tx, -s.ty, 26 * vRel + 12, '#E03131', 3.5);
+    }
+    $('t2vNow').textContent = fmt(vRel, 2) + '×';
+  }
+  function setE(e){
+    st.e = e;
+    $('t2eLab').textContent = fmt(e, 2);
+    $('t2eSlider').value = e;
+    clearSectors();
+    rebuildStatic();
+    render();
+  }
+  function setPlay(p){
+    st.playing = p;
+    $('t2play').textContent = p ? '⏸' : '▶';
+  }
+  const togglePlay = () => setPlay(!st.playing);
+
+  function tick(dt){
+    if(!st.playing) return;
+    const prev = st.Mtot;
+    st.Mtot += dt * st.speed * 2*Math.PI / PERIOD;
+    const dM = 2*Math.PI/NSEC;
+    // 이번 프레임에 완성된 부채꼴 확정 (첫 공전만)
+    const kPrev = Math.floor(prev / dM), kNow = Math.floor(Math.min(st.Mtot, 2*Math.PI - 1e-9) / dM);
+    for(let k = kPrev; k < kNow && k < NSEC; k++) completeSector(k);
+    if(prev < 2*Math.PI && st.Mtot >= 2*Math.PI && st.sectors.length < NSEC)
+      for(let k = st.sectors.length; k < NSEC; k++) completeSector(k);
+    render();
+  }
+
+  // 이벤트
+  $('t2play').addEventListener('click', togglePlay);
+  document.querySelectorAll('.t2speed').forEach(btn =>
+    btn.addEventListener('click', () => {
+      st.speed = parseFloat(btn.dataset.s);
+      document.querySelectorAll('.t2speed').forEach(x => x.classList.toggle('active', x === btn));
+    }));
+  $('t2eSlider').addEventListener('input', ev => setE(parseFloat(ev.target.value)));
+  $('t2mercury').addEventListener('click', () => setE(0.206));
+  $('t2clear').addEventListener('click', () => { clearSectors(); render(); });
+  $('t2vec').addEventListener('change', ev => { st.showVec = ev.target.checked; render(); });
+
+  rebuildStatic(); renderList(); render();
+  return {tick, setPlay, togglePlay};
+})();
+
+/* ================================================================
+   TAB 3 — 제3법칙 · 조화 법칙
+   ================================================================ */
+const T3 = (() => {
+  const svg = document.getElementById('svg3');
+  const CX = 380, CY = 330, MAXR = 300;
+  const PLANETS = [
+    {name:'수성', a:0.387,  P:0.241, color:'#868E96', r:5, on:true},
+    {name:'금성', a:0.723,  P:0.616, color:'#E8A33D', r:7, on:false},
+    {name:'지구', a:1.000,  P:1.000, color:'#1971C2', r:7, on:true},
+    {name:'화성', a:1.524,  P:1.881, color:'#E0533D', r:6, on:true},
+    {name:'목성', a:5.203,  P:11.86, color:'#C77B3F', r:11, on:false},
+    {name:'토성', a:9.537,  P:29.46, color:'#D9A85C', r:10, on:false},
+    {name:'천왕성', a:19.189, P:84.01, color:'#4DABF7', r:8, on:false},
+    {name:'해왕성', a:30.070, P:164.8, color:'#364FC7', r:8, on:false},
+  ];
+  const st = {t:0, playing:false, zoom:'in', virtual:null};  // t = 경과 년수. 지구 1년 = 5초
+  const $ = id => document.getElementById(id);
+
+  const gOrbits = el('g', {}, svg);
+  const gPlanets = el('g', {}, svg);
+  drawSun(svg, 13).setAttribute('transform', `translate(${CX},${CY})`);
+
+  function radiusOf(a){
+    if(st.zoom === 'in') return a * (MAXR / 1.7);
+    return MAXR * Math.pow(a / 40, 0.4);
+  }
+  function activePlanets(){
+    const arr = PLANETS.filter(p => p.on).slice();
+    if(st.virtual) arr.push(st.virtual);
+    return arr;
+  }
+  function rebuildOrbits(){
+    gOrbits.innerHTML = ''; gPlanets.innerHTML = '';
+    activePlanets().forEach(p => {
+      const R = radiusOf(p.a);
+      el('circle', {cx:CX, cy:CY, r:R, fill:'none', stroke:'#DEE2E6','stroke-width':1.5}, gOrbits);
+      const g = el('g', {}, gPlanets);
+      el('circle', {r:p.r, fill:p.color, stroke:'#fff','stroke-width':2}, g);
+      const t = el('text', {class:'svglabel', y:-p.r - 7, 'text-anchor':'middle', fill:p.color==='#9C36B5'?'#9C36B5':'#1F2328'}, g);
+      t.textContent = p.name;
+      p._g = g; p._R = R;
+    });
+    renderSim();
+  }
+  function renderSim(){
+    activePlanets().forEach(p => {
+      const ang = 2*Math.PI * st.t / p.P;    // 시작: 오른쪽(+x) 정렬, 반시계
+      const x = CX + p._R * Math.cos(ang), y = CY - p._R * Math.sin(ang);
+      p._g.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
+    });
+    $('t3time').textContent = st.t.toFixed(1);
+  }
+  // ---- 표 ----
+  function renderTable(){
+    const tb = $('t3tbody'); tb.innerHTML = '';
+    activePlanets().forEach(p => {
+      const a3 = p.a**3, P2 = p.P**2;
+      const tr = document.createElement('tr');
+      if(p.isVirtual) tr.className = 'virtual';
+      tr.innerHTML = `<td>${p.name}</td><td>${fmt(p.a,3)}</td><td>${fmt(p.P,3)}</td>`+
+        `<td>${fmtAuto(a3)}</td><td>${fmtAuto(P2)}</td><td class="big">${fmt(a3/P2,2)}</td>`;
+      tb.appendChild(tr);
+    });
+    renderGraph();
+  }
+  // ---- 체크박스 ----
+  const checks = $('t3checks');
+  PLANETS.forEach((p, i) => {
+    const lab = document.createElement('label');
+    lab.className = 'chk';
+    lab.innerHTML = `<input type="checkbox" ${p.on?'checked':''}> <span style="color:${p.color};font-weight:700">●</span>${p.name}`;
+    lab.querySelector('input').addEventListener('change', ev => {
+      p.on = ev.target.checked;
+      rebuildOrbits(); renderTable();
+    });
+    checks.appendChild(lab);
+  });
+  // ---- 가상 행성 ----
+  function updateVirtual(a){
+    const P = Math.sqrt(a**3);
+    st.virtual = {name:'가상 행성', a, P, color:'#9C36B5', r:8, on:true, isVirtual:true};
+    $('t3vaLab').textContent = fmt(a, 1);
+    $('t3vP').textContent = fmt(P, 1) + '년';
+    if(st.zoom === 'in' && a > 1.6){   // 내행성 화면 밖이면 전체 보기로 자동 전환
+      st.zoom = 'all';
+      $('t3zoomAll').classList.add('active'); $('t3zoomIn').classList.remove('active');
+    }
+    rebuildOrbits(); renderTable();
+  }
+  $('t3addVirtual').addEventListener('click', () => {
+    const on = !st.virtual;
+    if(on){
+      $('t3virtualCtl').style.display = '';
+      $('t3addVirtual').textContent = '－ 가상 행성 제거';
+      $('t3addVirtual').classList.add('on');
+      updateVirtual(parseFloat($('t3vaSlider').value));
+    } else {
+      st.virtual = null;
+      $('t3virtualCtl').style.display = 'none';
+      $('t3addVirtual').textContent = '＋ 가상 행성 추가';
+      $('t3addVirtual').classList.remove('on');
+      rebuildOrbits(); renderTable();
+    }
+  });
+  $('t3vaSlider').addEventListener('input', ev => updateVirtual(parseFloat(ev.target.value)));
+  // ---- 줌 ----
+  $('t3zoomIn').addEventListener('click', () => { st.zoom='in';
+    $('t3zoomIn').classList.add('active'); $('t3zoomAll').classList.remove('active'); rebuildOrbits(); });
+  $('t3zoomAll').addEventListener('click', () => { st.zoom='all';
+    $('t3zoomAll').classList.add('active'); $('t3zoomIn').classList.remove('active'); rebuildOrbits(); });
+  // ---- 그래프 (P² vs a³ 로그-로그) ----
+  const gsvg = document.getElementById('svg3g');
+  function renderGraph(){
+    gsvg.innerHTML = '';
+    const L = 62, R = 460, T = 18, B = 340;   // 그림 영역
+    const dec0 = -2, dec1 = 5;                 // 10^-2 ~ 10^5
+    const X = v => L + (Math.log10(v) - dec0) / (dec1 - dec0) * (R - L);
+    const Y = v => B - (Math.log10(v) - dec0) / (dec1 - dec0) * (B - T);
+    // 격자 + 눈금
+    for(let d = dec0; d <= dec1; d++){
+      const v = Math.pow(10, d);
+      el('line', {x1:X(v), y1:T, x2:X(v), y2:B, stroke:'#EFF1F4','stroke-width':1}, gsvg);
+      el('line', {x1:L, y1:Y(v), x2:R, y2:Y(v), stroke:'#EFF1F4','stroke-width':1}, gsvg);
+      const tx = el('text', {x:X(v), y:B+18, 'text-anchor':'middle','font-size':'12px', fill:'#5C636E'}, gsvg);
+      const ty = el('text', {x:L-8, y:Y(v)+4, 'text-anchor':'end','font-size':'12px', fill:'#5C636E'}, gsvg);
+      const sup = d === 0 ? '1' : d === 1 ? '10' : null;
+      if(sup){ tx.textContent = sup; ty.textContent = sup; }
+      else {
+        tx.innerHTML = `10<tspan dy="-5" font-size="9">${d<0?'−'+(-d):d}</tspan>`;
+        ty.innerHTML = `10<tspan dy="-5" font-size="9">${d<0?'−'+(-d):d}</tspan>`;
+      }
+    }
+    el('line', {x1:L, y1:B, x2:R, y2:B, stroke:'#868E96','stroke-width':1.5}, gsvg);
+    el('line', {x1:L, y1:T, x2:L, y2:B, stroke:'#868E96','stroke-width':1.5}, gsvg);
+    const xl = el('text', {x:(L+R)/2, y:B+38, 'text-anchor':'middle','font-size':'14px', fill:'#1F2328','font-weight':'600'}, gsvg);
+    xl.textContent = 'a³ (AU³)';
+    const yl = el('text', {x:14, y:T+8, 'font-size':'14px', fill:'#1F2328','font-weight':'600'}, gsvg);
+    yl.textContent = 'P² (년²)';
+    // 기울기 1 직선 (P² = a³)
+    el('line', {x1:X(1e-2), y1:Y(1e-2), x2:X(1e5), y2:Y(1e5), stroke:'#FA5252','stroke-width':2}, gsvg);
+    // 행성 점
+    activePlanets().forEach(p => {
+      const a3 = p.a**3, P2 = p.P**2;
+      el('circle', {cx:X(a3), cy:Y(P2), r:5.5, fill:p.color, stroke:'#fff','stroke-width':1.5}, gsvg);
+      const t = el('text', {x:X(a3)+9, y:Y(P2)-6, 'font-size':'12.5px', fill:'#1F2328',
+                            class:'svglabel', 'font-weight':'500'}, gsvg);
+      t.textContent = p.name;
+    });
+  }
+  document.getElementById('t3graphBox').addEventListener('toggle', renderGraph);
+  // ---- 재생 ----
+  function setPlay(p){
+    st.playing = p;
+    $('t3play').textContent = p ? '⏸' : '▶';
+  }
+  const togglePlay = () => setPlay(!st.playing);
+  $('t3play').addEventListener('click', togglePlay);
+  $('t3reset').addEventListener('click', () => { st.t = 0; renderSim(); });
+  function tick(dt){
+    if(!st.playing) return;
+    st.t += dt / 5;      // 지구 1년 = 5초
+    renderSim();
+  }
+  rebuildOrbits(); renderTable();
+  return {tick, setPlay, togglePlay};
+})();
+
+/* ================================================================
+   메인 루프
+   ================================================================ */
+let lastT = performance.now();
+function loop(now){
+  const dt = Math.min((now - lastT) / 1000, 0.05);
+  lastT = now;
+  if(tabs.cur === 1) T1.tick(dt);
+  if(tabs.cur === 2) T2.tick(dt);
+  if(tabs.cur === 3) T3.tick(dt);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ================================================================
+   자체 검증 (콘솔에서 __selftest() 실행)
+   ================================================================ */
+window.__selftest = function(){
+  const out = [];
+  // 3. 부채꼴 면적 상대 오차 1% 이내 (e=0.6)
+  {
+    const a = 5, e = 0.6, N = 8, dM = 2*Math.PI/N, areas = [];
+    for(let k = 0; k < N; k++) areas.push(polyArea(sectorPolygon(a, e, k*dM, (k+1)*dM, 96)));
+    const mean = areas.reduce((x,y)=>x+y,0)/N;
+    const dev = Math.max(...areas.map(x=>Math.abs(x-mean)))/mean*100;
+    out.push(['부채꼴 면적 최대 편차(%) < 1', dev.toFixed(4), dev < 1]);
+  }
+  // 4. v근일점/v원일점 = (1+e)/(1−e) = 4.0 (e=0.6)
+  {
+    const a = 5, e = 0.6;
+    const vp = orbitState(a, e, 0).v, va = orbitState(a, e, Math.PI).v;
+    out.push(['v근/v원 = 4.0 (e=0.6)', (vp/va).toFixed(4), Math.abs(vp/va - 4) < 0.01]);
+  }
+  // 5. 8행성 a³/P² = 1.00 ± 0.02
+  {
+    const D = [[0.387,0.241],[0.723,0.616],[1,1],[1.524,1.881],[5.203,11.86],[9.537,29.46],[19.189,84.01],[30.070,164.8]];
+    const ok = D.every(([a,P]) => Math.abs(a**3/P**2 - 1) < 0.02);
+    out.push(['8행성 a³/P² = 1.00±0.02', D.map(([a,P])=>(a**3/P**2).toFixed(3)).join(' '), ok]);
+  }
+  // 6. 가상 행성 a=4→P=8, a=9→P=27
+  out.push(['a=4→P=8, a=9→P=27', Math.sqrt(64)+', '+Math.sqrt(729), Math.sqrt(4**3)===8 && Math.sqrt(9**3)===27]);
+  // 1. r1+r2 불변 (타원 위 임의 점)
+  {
+    const a = 5, e = 0.6, c = a*e, b = a*Math.sqrt(1-e*e);
+    let maxDev = 0;
+    for(let i = 0; i < 200; i++){
+      const phi = i/200*2*Math.PI;
+      const x = a*Math.cos(phi), y = b*Math.sin(phi);
+      const s = Math.hypot(x+c,y) + Math.hypot(x-c,y);
+      maxDev = Math.max(maxDev, Math.abs(s - 2*a));
+    }
+    out.push(['r₁+r₂ = 2a 불변', maxDev.toExponential(2), maxDev < 1e-9]);
+  }
+  out.forEach(([name, val, ok]) => console.log((ok?'✅':'❌') + ' ' + name + ' → ' + val));
+  return out.every(o => o[2]);
+};
+</script>
+</body>
+</html>
