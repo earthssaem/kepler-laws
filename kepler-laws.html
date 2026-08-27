@@ -168,10 +168,10 @@ svg text{font-family:inherit;}
   <!-- 작도 모드 패널 -->
   <aside class="panel" id="t1panelDraw">
     <h2>실로 타원 그리기 (교과서 179쪽 탐구)</h2>
-    <div class="numrow"><span class="k">실 ① &nbsp;r₁</span><span class="bignum" id="t1r1" style="color:var(--r1)">6.3</span></div>
-    <div class="numrow"><span class="k">실 ② &nbsp;r₂</span><span class="bignum" id="t1r2" style="color:var(--r2)">3.7</span></div>
+    <div class="numrow"><span class="k">r₁ (연필–F₁)</span><span class="bignum" id="t1r1">6.3</span></div>
+    <div class="numrow"><span class="k">r₂ (연필–F₂)</span><span class="bignum" id="t1r2">3.7</span></div>
     <div class="sumbox">
-      <span class="k" style="font-size:16px;color:var(--sub)">r₁ + r₂</span>
+      <span class="k" style="font-size:16px;color:var(--sub)">실 전체 길이<br>r₁ + r₂</span>
       <span class="bignum" id="t1rsum">10.0</span>
       <span class="badge">항상 일정!</span>
     </div>
@@ -483,10 +483,11 @@ const T1 = (() => {
   const ellipseFaint = el('path', {fill:'none', stroke:'#D4D8DE', 'stroke-width':2, 'stroke-dasharray':'5 6'}, gOrbitEl);
   const trace = el('path', {fill:'none', stroke:'#868E96', 'stroke-width':2.5}, gOrbitEl);
   const gStr = el('g', {}, svg);              // 실 2가닥
-  const str1 = el('line', {stroke:'#F5A623','stroke-width':3,'stroke-linecap':'round'}, gStr);
-  const str2 = el('line', {stroke:'#C2255C','stroke-width':3,'stroke-linecap':'round'}, gStr);
-  const str1lab = el('text', {class:'svglabel', fill:'#F5A623'}, gStr);
-  const str2lab = el('text', {class:'svglabel', fill:'#C2255C'}, gStr);
+  // 실은 한 가닥 — 두 구간 모두 같은 색, r₁·r₂는 라벨로만 구분
+  const str1 = el('line', {stroke:'#F5A623','stroke-width':3.5,'stroke-linecap':'round'}, gStr);
+  const str2 = el('line', {stroke:'#F5A623','stroke-width':3.5,'stroke-linecap':'round'}, gStr);
+  const str1lab = el('text', {class:'svglabel', fill:'#1F2328'}, gStr);
+  const str2lab = el('text', {class:'svglabel', fill:'#1F2328'}, gStr);
   // 압정(초점)
   function makePin(){
     const g = el('g', {cursor:'ew-resize'}, svg);
