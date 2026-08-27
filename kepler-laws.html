@@ -533,7 +533,7 @@ const T1 = (() => {
   el('line',{x1:-7,y1:-7,x2:7,y2:7,stroke:'#ADB5BD','stroke-width':2.5},emptyFocus);
   el('line',{x1:-7,y1:7,x2:7,y2:-7,stroke:'#ADB5BD','stroke-width':2.5},emptyFocus);
   const emptyLab = el('text',{class:'svglabel', fill:'#ADB5BD','text-anchor':'middle'},gOrbitMode);
-  emptyLab.textContent = '초점 (비어 있음)';
+  emptyLab.textContent = '초점';
   const sunG = drawSun(gOrbitMode, 17);
   const sunLab = el('text',{class:'svglabel','text-anchor':'middle'},gOrbitMode); sunLab.textContent='태양';
   const periLab = el('text',{class:'svglabel perilab','text-anchor':'start'},gOrbitMode); periLab.textContent='근일점';
