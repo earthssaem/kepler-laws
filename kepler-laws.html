@@ -220,7 +220,15 @@ svg text{font-family:inherit;}
     <div class="note">지구·화성 궤도는 타원이지만 <b>거의 원</b>으로 보입니다.</div>
     <label class="chk"><input type="checkbox" id="t1comp" checked> 구성 요소 표시 (O·반지름·초점)</label>
     <div class="hr"></div>
-    <div class="numrow"><span class="k">이심률 e</span><span class="bignum" id="t1eOrbit">0.60</span></div>
+    <h2>궤도 이심률 (학습지)</h2>
+    <div class="quad">
+      <div class="q"><span class="k">긴반지름 a</span><span class="v" style="color:var(--accent)" id="t1oa">5.0</span></div>
+      <div class="q"><span class="k">짧은반지름 b</span><span class="v" style="color:#2F9E44" id="t1ob">4.0</span></div>
+      <div class="q"><span class="k">초점 거리 c</span><span class="v" style="color:var(--focus)" id="t1oc">3.0</span></div>
+      <div class="q"><span class="k">이심률 e = c/a</span><span class="v" id="t1eOrbit">0.60</span></div>
+    </div>
+    <div class="note" id="t1eFormula">e = c/a = √(a²−b²)/a = 3.0 / 5.0 = <b>0.60</b></div>
+    <div class="hr"></div>
     <div class="numrow"><span class="k">근일점 거리 a(1−e)</span><span class="bignum" id="t1qPeri" style="color:var(--peri)">2.0</span></div>
     <div class="numrow"><span class="k">원일점 거리 a(1+e)</span><span class="bignum" id="t1qAph" style="color:var(--aph)">8.0</span></div>
     <div class="note" id="t1e09note" style="display:none">e = 0.9여도 <b>찌그러진 타원</b>이지 직선이 아닙니다. (e = 1이면 포물선)</div>
@@ -507,14 +515,18 @@ const T1 = (() => {
   const gOrbitMode = el('g', {style:'display:none'}, svg);
   // 구성 요소(그림 Ⅲ-22): 중심 O, 긴반지름, 짧은반지름, 초점 라벨
   const gComp = el('g', {}, gOrbitMode);
-  const axMajor = el('line', {stroke:'#495057','stroke-width':1.2}, gComp);
-  const axMinor = el('line', {stroke:'#495057','stroke-width':1.2,'stroke-dasharray':'5 5'}, gComp);
+  const axMajor = el('line', {stroke:'#ADB5BD','stroke-width':1.1}, gComp);
+  // 긴반지름 a(남색)·짧은반지름 b(초록)·초점 거리 c(빨강) — 학습지 그림처럼 별도 선분 + 끝 눈금
+  const aPath = el('path', {stroke:'#364FC7','stroke-width':2.2, fill:'none'}, gComp);
+  const bPath = el('path', {stroke:'#2F9E44','stroke-width':2.2, fill:'none','stroke-dasharray':'6 5'}, gComp);
+  const cPath = el('path', {stroke:'#E03131','stroke-width':2.2, fill:'none'}, gComp);
   const oDot = el('circle', {r:3, fill:'#495057'}, gComp);
   const oLab = el('text', {class:'svglabel', fill:'#495057'}, gComp); oLab.textContent = 'O';
-  const majLab = el('text', {class:'svglabel', fill:'#495057','text-anchor':'middle','font-weight':'500'}, gComp);
-  majLab.textContent = '긴반지름';
-  const minLab = el('text', {class:'svglabel', fill:'#495057','text-anchor':'start','font-weight':'500'}, gComp);
-  minLab.textContent = '짧은반지름';
+  const aLab2 = el('text', {class:'svglabel', fill:'#364FC7','text-anchor':'middle'}, gComp);
+  aLab2.textContent = '긴반지름 a';
+  const bLab2 = el('text', {class:'svglabel', fill:'#2F9E44','text-anchor':'start'}, gComp);
+  bLab2.textContent = '짧은반지름 b';
+  const cLab2 = el('text', {class:'svglabel', fill:'#E03131','text-anchor':'middle'}, gComp);
   const sunFocusLab = el('text', {class:'svglabel', fill:'#E03131','text-anchor':'middle'}, gComp);
   sunFocusLab.textContent = '초점';
   const emptyFocus = el('g', {}, gOrbitMode);
@@ -620,13 +632,23 @@ const T1 = (() => {
     if(showComp){
       axMajor.setAttribute('x1', CX - apx); axMajor.setAttribute('y1', CY);
       axMajor.setAttribute('x2', CX + apx); axMajor.setAttribute('y2', CY);
-      axMinor.setAttribute('x1', CX); axMinor.setAttribute('y1', CY);
-      axMinor.setAttribute('x2', CX); axMinor.setAttribute('y2', CY + bpx);
       oDot.setAttribute('cx', CX); oDot.setAttribute('cy', CY);
-      oLab.setAttribute('x', CX + 9); oLab.setAttribute('y', CY - 10);
-      majLab.setAttribute('x', CX - apx*0.72); majLab.setAttribute('y', CY + 26);
-      minLab.setAttribute('x', CX + 10); minLab.setAttribute('y', CY + bpx/2 + 5);
-      sunFocusLab.setAttribute('x', sx); sunFocusLab.setAttribute('y', CY - 34);
+      oLab.setAttribute('x', CX - 20); oLab.setAttribute('y', CY - 8);
+      // a: O → 원일점 쪽 꼭짓점 (축 아래 16px 평행 선분, 양끝 눈금)
+      const yA = CY + 16;
+      aPath.setAttribute('d', `M${CX},${yA-6}L${CX},${yA+6}M${CX-apx},${yA-6}L${CX-apx},${yA+6}M${CX},${yA}L${CX-apx},${yA}`);
+      aLab2.setAttribute('x', CX - apx/2); aLab2.setAttribute('y', yA + 22);
+      // b: O → 아래 꼭짓점 (점선)
+      bPath.setAttribute('d', `M${CX},${CY}L${CX},${CY+bpx}M${CX-6},${CY+bpx}L${CX+6},${CY+bpx}`);
+      bLab2.setAttribute('x', CX + 11); bLab2.setAttribute('y', CY + bpx*0.62);
+      // c: O → 태양(초점) (축 위 16px 평행 선분, 양끝 눈금)
+      const yC = CY - 16;
+      cPath.style.display = cpx > 12 ? '' : 'none';
+      cLab2.style.display = cpx > 12 ? '' : 'none';
+      cPath.setAttribute('d', `M${CX},${yC-6}L${CX},${yC+6}M${sx},${yC-6}L${sx},${yC+6}M${CX},${yC}L${sx},${yC}`);
+      cLab2.textContent = cpx > 95 ? '초점 거리 c' : 'c';
+      cLab2.setAttribute('x', (CX + sx)/2); cLab2.setAttribute('y', yC - 10);
+      sunFocusLab.setAttribute('x', sx); sunFocusLab.setAttribute('y', CY - 40);
     }
     // 행성 (물리 엔진: 태양 = 초점 원점, 근일점 +x)
     const s = orbitState(A, st.e, st.M);
@@ -648,8 +670,14 @@ const T1 = (() => {
     if(nearPeri && st.lastPulse !== 'p'){ periLab.classList.remove('pulse'); void periLab.getBBox; periLab.classList.add('pulse'); st.lastPulse='p'; }
     else if(nearAph && st.lastPulse !== 'a'){ aphLab.classList.remove('pulse'); void aphLab.getBBox; aphLab.classList.add('pulse'); st.lastPulse='a'; }
     else if(!nearPeri && !nearAph) st.lastPulse = '';
-    // 패널
+    // 패널 (학습지: e = c/a = √(a²−b²)/a)
+    $('t1oa').textContent = fmt(A, 1);
+    $('t1ob').textContent = fmt(b(), 1);
+    $('t1oc').textContent = fmt(st.e * A, 1);
     $('t1eOrbit').textContent = fmt(st.e, 2) + (st.e < 0.005 ? ' (원)' : '');
+    $('t1eFormula').innerHTML = st.e < 0.005
+      ? 'e = c/a = √(a²−b²)/a = 0 / 5.0 = <b>0</b> → 원!'
+      : `e = c/a = √(a²−b²)/a = ${fmt(st.e*A,1)} / ${fmt(A,1)} = <b>${fmt(st.e,2)}</b>`;
     $('t1qPeri').textContent = fmt(A*(1 - st.e), 1);
     $('t1qAph').textContent = fmt(A*(1 + st.e), 1);
     $('t1e09note').style.display = st.e >= 0.85 ? '' : 'none';
