@@ -32,8 +32,14 @@ header h1{font-size:17px; font-weight:700; color:var(--sub); letter-spacing:.02e
 .tabs button:hover{background:#F1F3F5;}
 .tabs button.active{color:#fff; background:var(--accent); font-weight:700;}
 .spacehint{margin-left:auto; font-size:13px; color:#ADB5BD; white-space:nowrap;}
+/* ---------- footer ---------- */
+footer{
+  height:26px; display:flex; align-items:center; justify-content:center;
+  padding:0 20px; background:var(--panel); border-top:1px solid var(--line);
+  font-size:12px; color:#ADB5BD;
+}
 /* ---------- layout ---------- */
-main{height:calc(100% - 56px);}
+main{height:calc(100% - 56px - 26px);}
 .tab{display:none; height:100%; padding:14px; gap:14px;}
 .tab.active{display:flex;}
 .stage{flex:7; min-width:0; display:flex; flex-direction:column; gap:10px;}
@@ -321,6 +327,7 @@ svg text{font-family:inherit;}
 </section>
 
 </main>
+<footer>© 2026 제작: 김연경(earthssaem@gmail.com)</footer>
 <script>
 'use strict';
 /* ================================================================
