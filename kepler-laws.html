@@ -24,6 +24,10 @@ header{
   padding:0 20px; background:var(--panel); border-bottom:1px solid var(--line);
 }
 header h1{font-size:17px; font-weight:700; color:var(--sub); letter-spacing:.02em; white-space:nowrap;}
+/* 제목을 누르면 처음 화면으로 */
+a.brand{color:inherit;text-decoration:none;border-radius:16px;margin:-4px -8px;padding:4px 8px;-webkit-tap-highlight-color:transparent}
+@media (hover:hover){ a.brand:hover h1{color:var(--accent)} }   /* 터치 화면에서는 누른 뒤 색이 남지 않게 */
+a.brand:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .tabs{display:flex; gap:6px;}
 .tabs button{
   font:inherit; font-size:16px; font-weight:500; color:var(--sub);
@@ -152,6 +156,7 @@ svg text{font-family:inherit;}
   body{overflow:auto; -webkit-overflow-scrolling:touch;}
   header{height:auto; flex-wrap:wrap; gap:6px 10px; padding:8px 10px;}
   header h1{width:100%; font-size:15px;}
+  header a.brand{width:calc(100% + 16px);}   /* 제목 링크가 한 줄을 다 차지해 탭이 아래 줄로 가도록 (좌우 -8px 여백만큼 더함) */
   .tabs{width:100%; gap:4px;}
   .tabs button{flex:1 1 0; min-width:0; padding:7px 4px; font-size:13.5px; line-height:1.3; white-space:normal; word-break:keep-all;}
   main{height:auto;}
@@ -181,7 +186,7 @@ svg text{font-family:inherit;}
 </head>
 <body>
 <header>
-  <h1>케플러 법칙</h1>
+  <a class="brand" id="homeLink" href="#" title="처음 화면으로" aria-label="케플러 법칙 — 처음 화면으로"><h1>케플러 법칙</h1></a>
   <nav class="tabs">
     <button id="tabbtn1" class="active">① 제1법칙 · 타원 궤도</button>
     <button id="tabbtn2">② 제2법칙 · 면적 속도 일정</button>
@@ -489,6 +494,14 @@ function switchTab(n){
 for(let i = 1; i <= 3; i++){
   document.getElementById('tabbtn'+i).addEventListener('click', () => switchTab(i));
 }
+// 제목을 누르면 처음 화면으로: ① 제1법칙 탭 · 작도 모드
+// (이심률, 그려 둔 궤적, 재생 위치, ②③ 탭의 설정·행성 선택은 그대로 둠)
+function goHome(){
+  if(tabs.cur !== 1) switchTab(1);
+  T1.home();
+  scrollTo(0, 0); document.body.scrollTop = 0;   // 좁은 화면에서 스크롤한 경우 맨 위로
+}
+document.getElementById('homeLink').addEventListener('click', ev => { ev.preventDefault(); goHome(); });
 document.addEventListener('keydown', ev => {
   if(ev.code === 'Space' && !/INPUT|TEXTAREA/.test(ev.target.tagName)){
     ev.preventDefault();
@@ -586,6 +599,7 @@ const T1 = (() => {
   planetLab.textContent = '행성';
 
   const $ = id => document.getElementById(id);
+  const hintDraw = $('t1hint').textContent;          // 처음 열었을 때의 작도 모드 안내 문구
   const c = () => st.e * A * SCALE;                 // 초점 거리(px)
   const b = () => A * Math.sqrt(1 - st.e*st.e);     // 짧은반지름(단위)
 
@@ -846,7 +860,12 @@ const T1 = (() => {
     }
   }
   render();
-  return {tick, setPlay, togglePlay};
+  // 제목을 누르면: 작도 모드로 돌리고 안내 문구도 처음 열었을 때의 것으로 (이심률·궤적은 그대로)
+  function home(){
+    if(st.mode !== 'draw') setMode('draw');
+    $('t1hint').textContent = hintDraw;
+  }
+  return {tick, setPlay, togglePlay, home};
 })();
 
 /* ================================================================
