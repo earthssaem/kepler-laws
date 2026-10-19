@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>케플러 법칙</title>
+<!-- 새로고침 때 ①탭이 잠깐 보였다가 바뀌지 않도록, 그리기 전에 주소의 탭(#tab3)을 html[data-tab] 으로 표시 (탭 내용은 css, 탭 버튼은 본문 끝 스크립트, 해제는 switchTab) -->
+<script>(function () { var m = location.hash.match(/^#tab([23])$/); if (m) document.documentElement.setAttribute('data-tab', m[1]); })();</script>
 <style>
 :root{
   --bg:#F7F8FA; --panel:#FFFFFF; --line:#E2E5EA; --ink:#1F2328; --sub:#5C636E;
@@ -48,6 +50,9 @@ footer .hub:hover{color:var(--sub);text-decoration-color:currentColor}
 main{height:calc(100% - 56px - 26px);}
 .tab{display:none; height:100%; padding:14px; gap:14px;}
 .tab.active{display:flex;}
+/* 새로고침 때 주소의 탭(#tab2, #tab3)을 처음부터 보여 줌: head 스크립트가 html[data-tab] 을 붙이고 switchTab 이 뗌 */
+html[data-tab] #panel1{display:none;}
+html[data-tab="2"] #panel2,html[data-tab="3"] #panel3{display:flex;}
 .stage{flex:7; min-width:0; display:flex; flex-direction:column; gap:10px;}
 .stagebox{flex:1; min-height:0; background:var(--panel); border:1px solid var(--line); border-radius:12px; position:relative; overflow:hidden;}
 .stagebox svg{width:100%; height:100%; display:block; touch-action:none;}
@@ -161,12 +166,12 @@ svg text{font-family:inherit;}
   .tabs button{flex:1 1 0; min-width:0; padding:7px 4px; font-size:13.5px; line-height:1.3; white-space:normal; word-break:keep-all;}
   main{height:auto;}
   .tab{height:auto; padding:10px; gap:10px;}
-  .tab.active{flex-direction:column;}
+  .tab.active,html[data-tab="2"] #panel2,html[data-tab="3"] #panel3{flex-direction:column;}
   .stage{flex:none !important; width:100%; gap:8px;}
   .stagehead{gap:8px;}
   .stagehead .note{font-size:13px; flex:1 1 100%;}
   .stagebox{flex:none; width:100%; aspect-ratio:1000/620; min-height:0;}
-  #tab3 .stagebox{aspect-ratio:760/660;}
+  #panel3 .stagebox{aspect-ratio:760/660;}
   .stagebox svg{width:100%; height:100%;}
   .counter{left:8px; top:8px; font-size:16px; padding:4px 8px; max-width:calc(100% - 16px); line-height:1.35;}
   .counter span{font-size:12px !important;}
@@ -197,7 +202,8 @@ svg text{font-family:inherit;}
 <main>
 
 <!-- ================= TAB 1 ================= -->
-<section id="tab1" class="tab active">
+<!-- 탭 영역 id 는 panel1~3: 주소의 #tab3 과 같은 id 가 있으면 열 때 브라우저가 그 영역까지 스크롤해 폰에서 탭 줄이 가려지므로 다르게 둠 -->
+<section id="panel1" class="tab active">
   <div class="stage">
     <div class="stagehead">
       <div class="seg" id="t1modeSeg">
@@ -280,7 +286,7 @@ svg text{font-family:inherit;}
 </section>
 
 <!-- ================= TAB 2 ================= -->
-<section id="tab2" class="tab">
+<section id="panel2" class="tab">
   <div class="stage">
     <div class="stagebox">
       <svg id="svg2" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet"></svg>
@@ -320,7 +326,7 @@ svg text{font-family:inherit;}
 </section>
 
 <!-- ================= TAB 3 ================= -->
-<section id="tab3" class="tab">
+<section id="panel3" class="tab">
   <div class="stage" style="flex:5.5">
     <div class="stagehead">
       <button class="btn playbtn" id="t3play">▶</button>
@@ -366,6 +372,9 @@ svg text{font-family:inherit;}
 
 </main>
 <footer>© 2026 제작: 김연경(earthssaem@gmail.com) | <a class="hub" href="https://earthssaem-lab.vercel.app/" target="_blank" rel="noopener">연경쌤의 지구과학 실험실 둘러보기 →</a></footer>
+<script>/* 주소의 탭 버튼을 처음부터 선택된 모양으로 (위 head 스크립트 참고. 탭 줄은 폰에서도 옆으로 밀리지 않으므로 위치는 맞추지 않음) */
+(function () { var id = document.documentElement.getAttribute('data-tab'); if (!id) return;
+  for (var i = 1; i <= 3; i++) document.getElementById('tabbtn' + i).classList.toggle('active', String(i) === id); })();</script>
 <script>
 'use strict';
 /* ================================================================
@@ -480,6 +489,7 @@ function drawArrow(g, x, y, dx, dy, len, color, w){
    ================================================================ */
 const tabs = {cur:1};
 function switchTab(n){
+  document.documentElement.removeAttribute('data-tab');   // 처음 표시(html[data-tab])를 거두고 .active 로만 보여 줌
   if(tabs.cur === n) return;
   // 떠나는 탭 자동 일시정지
   if(tabs.cur === 1) T1.setPlay(false);
@@ -487,9 +497,11 @@ function switchTab(n){
   if(tabs.cur === 3) T3.setPlay(false);
   tabs.cur = n;
   for(let i = 1; i <= 3; i++){
-    document.getElementById('tab'+i).classList.toggle('active', i === n);
+    document.getElementById('panel'+i).classList.toggle('active', i === n);
     document.getElementById('tabbtn'+i).classList.toggle('active', i === n);
   }
+  // 새로고침해도 보던 탭이 열리게 주소 끝에 탭 번호를 적어 둠 (#tab3). ①탭은 주소를 깨끗하게 둠. 방문 기록은 늘리지 않음
+  try { history.replaceState(null, '', n === 1 ? location.pathname + location.search : '#tab' + n); } catch(e){ /* 주소를 못 바꾸는 환경이면 그냥 둠 */ }
 }
 for(let i = 1; i <= 3; i++){
   document.getElementById('tabbtn'+i).addEventListener('click', () => switchTab(i));
@@ -1216,6 +1228,12 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+
+/* 처음 열 때 주소에 탭 번호가 있으면 그 탭으로 (탭 버튼과 같은 switchTab 사용, 모든 스크립트를 읽은 뒤) */
+document.addEventListener('DOMContentLoaded', () => {
+  const m = location.hash.match(/^#tab([1-3])$/);
+  if(m && +m[1] !== tabs.cur) switchTab(+m[1]);
+});
 
 /* ================================================================
    자체 검증 (콘솔에서 __selftest() 실행)
